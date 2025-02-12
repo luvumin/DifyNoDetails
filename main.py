@@ -7,7 +7,7 @@ Dify返回的消息，移除消息中的所有<details>标签及其内容
 """
 
 # 注册插件
-@register(name="DifyNoDetails", description="Dify返回的消息，移除消息中的所有<details>标签及其内容", version="0.1", author="yuanguang")
+@register(name="DifyNoDetails", description="Dify返回的消息，移除消息中的所有<details>标签及其内容", version="0.2", author="yuanguang")
 class DifyNoDetailsPlugin(BasePlugin):
 
     # 插件加载时触发
@@ -43,7 +43,7 @@ class DifyNoDetailsPlugin(BasePlugin):
     @handler(NormalMessageResponded)
     async def normal_message_responded(self, ctx: EventContext):
         msg = ctx.event.response_text
-        if "<think>" in msg:
+        if "<details" in msg:
             processed_msg = self.remove_details_content(msg)
             if processed_msg:
                 ctx.add_return("reply", [processed_msg])
