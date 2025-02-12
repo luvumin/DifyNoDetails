@@ -1,48 +1,54 @@
 from pkg.plugin.context import register, handler, llm_func, BasePlugin, APIHost, EventContext
 from pkg.plugin.events import *  # 导入事件类
+import re
 
+"""
+Dify返回的消息，移除消息中的所有<details>标签及其内容
+"""
 
 # 注册插件
-@register(name="Hello", description="hello world", version="0.1", author="RockChinQ")
-class MyPlugin(BasePlugin):
+@register(name="DifyNoDetails", description="Dify返回的消息，移除消息中的所有<details>标签及其内容", version="0.1", author="yuanguang")
+class DifyNoDetailsPlugin(BasePlugin):
 
     # 插件加载时触发
     def __init__(self, host: APIHost):
-        pass
+        super().__init__(host)  # 必须调用父类的初始化方法
 
     # 异步初始化
     async def initialize(self):
         pass
 
-    # 当收到个人消息时触发
-    @handler(PersonNormalMessageReceived)
-    async def person_normal_message_received(self, ctx: EventContext):
-        msg = ctx.event.text_message  # 这里的 event 即为 PersonNormalMessageReceived 的对象
-        if msg == "hello":  # 如果消息为hello
+    def remove_details_content(self, msg: str) -> str:
+        """移除消息中的所有think标签及其内容"""
+        
+        pattern = r'<details[\s\S]*?</think>' 
 
-            # 输出调试信息
-            self.ap.logger.debug("hello, {}".format(ctx.event.sender_id))
+        result = msg
+        iteration = 0
+        max_iterations = 10
 
-            # 回复消息 "hello, <发送者id>!"
-            ctx.add_return("reply", ["hello, {}!".format(ctx.event.sender_id)])
+        while "<details" in result and iteration < max_iterations:
+            if not re.findall(pattern, result):
+                break
+            result = re.sub(pattern, '', result)
+            result = re.sub(r'\n\s*\n', '\n', result.strip())
+            iteration += 1
 
-            # 阻止该事件默认行为（向接口获取回复）
-            ctx.prevent_default()
+        if iteration >= max_iterations:
+            self.ap.logger.warning(f"达到最大迭代次数 {max_iterations}，可能存在异常标签")
 
-    # 当收到群消息时触发
-    @handler(GroupNormalMessageReceived)
-    async def group_normal_message_received(self, ctx: EventContext):
-        msg = ctx.event.text_message  # 这里的 event 即为 GroupNormalMessageReceived 的对象
-        if msg == "hello":  # 如果消息为hello
+        return result
 
-            # 输出调试信息
-            self.ap.logger.debug("hello, {}".format(ctx.event.sender_id))
-
-            # 回复消息 "hello, everyone!"
-            ctx.add_return("reply", ["hello, everyone!"])
-
-            # 阻止该事件默认行为（向接口获取回复）
-            ctx.prevent_default()
+    # 当收到回复消息时触发
+    @handler(NormalMessageResponded)
+    async def normal_message_responded(self, ctx: EventContext):
+        msg = ctx.event.response_text
+        if "<think>" in msg:
+            processed_msg = self.remove_details_content(msg)
+            if processed_msg:
+                ctx.add_return("reply", [processed_msg])
+            else:
+                self.ap.logger.warning("处理后的消息为空，跳过回复")
 
     # 插件卸载时触发
     def __del__(self):
