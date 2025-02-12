@@ -1,4 +1,5 @@
-# HelloPlugin
+# DifyNoDetails
+Dify返回的消息，移除消息中的所有<details>标签及其内容
 
 <!--
 ## 插件开发者详阅
