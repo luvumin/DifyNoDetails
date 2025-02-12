@@ -7,7 +7,7 @@ Dify返回的消息，移除消息中的所有<details>标签及其内容
 """
 
 # 注册插件
-@register(name="DifyNoDetails", description="Dify返回的消息，移除消息中的所有<details>标签及其内容", version="0.2", author="yuanguang")
+@register(name="DifyNoDetails", description="Dify返回的消息，移除消息中的所有<details>标签及其内容", version="0.3", author="yuanguang")
 class DifyNoDetailsPlugin(BasePlugin):
 
     # 插件加载时触发
@@ -19,9 +19,9 @@ class DifyNoDetailsPlugin(BasePlugin):
         pass
 
     def remove_details_content(self, msg: str) -> str:
-        """移除消息中的所有think标签及其内容"""
+        """移除消息中的所有details标签及其内容"""
         
-        pattern = r'<details[\s\S]*?</think>' 
+        pattern = r'<details[\s\S]*?</details>' 
 
         result = msg
         iteration = 0
